@@ -19,24 +19,25 @@
     - Login to Vault with the root token : `vault login YOUR_ROOT_TOKE_HERE`
     - Enable AWS secret engine : `vault secrets enable aws`.
     - There is not need to configure `aws/config/root` it is automatically going to use the instance_profile of the EC2.
-    - In the current folder create a JSON file named `role.json` with the following content (this one gives all permissions to EC2 service when role is used):
-        ```
-        {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "ec2Admin",
-              "Effect": "Allow",
-              "Action": ["ec2:*"],
-              "Resource": ["*"]
-            }
-          ]
-        }
-        ```
-    - Create simple AWS secret engine role (IAM user) using : `vault write aws/roles/my-role-iam-user credential_type=iam_user policy_document=@role.json`.
-    - Request a creation of brand new IAM AWS user by : `vault read aws/creds/my-role-iam-user`. Vault is going to return to you access and secret AWS keys that are valid for any (`ec2:*`) operation.
-        > Note : If the policy document is not valid, Vault is going to create user in AWS IAM, and error is going to be returned, the user should be deleted manually from AWS console.
-    - The key is valid for 768h (system default), to revoke it manually, execute : `vault lease revoke -prefix aws/creds/my-role-iam-user`.
+    - ### Generating "iam_user" credentials ( regular AWS IAM user) :
+      - In the current folder create a JSON file named `role.json` with the following content (this one gives   all permissions to EC2 service when role is used):
+          ```
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "ec2Admin",
+                "Effect": "Allow",
+                "Action": ["ec2:*"],
+                "Resource": ["*"]
+              }
+            ]
+          }
+          ```
+      - Create simple AWS secret engine role (IAM user) using : `vault write aws/roles/my-role-iam-user   credential_type=iam_user policy_document=@role.json`.
+      - Request a creation of brand new IAM AWS user by : `vault read aws/creds/my-role-iam-user`. Vault is   going to return to you access and secret AWS keys that are valid for any (`ec2:*`) operation.
+          > Note : If the policy document is not valid, Vault is going to create user in AWS IAM, and error   is going to be returned, the user should be deleted manually from AWS console.
+      - The key is valid for 768h (system default), to revoke it manually, execute : `vault lease revoke  -prefix aws/creds/my-role-iam-user`.
     - ### Generating "Assume role" credentials ( STS short-lived credentials ) :
       - Generating temporary credentials is ofter refered in AWS terminology as "Assuming role", alongside the `acceess_key` and the `secret_key` there is a `security_token` when temporary credentials are genereated.
       - Take a look at the `roles_additional.tf` file, it gives a permission to the role (`vault-iam-root-role`) used by Vault as `root` ( `aws/config/root` ) to assume the the role that we want to give to the user (create_ami role), so the user is going to get STS credentials for that role. 
