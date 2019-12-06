@@ -37,6 +37,23 @@
     - Request a creation of brand new IAM AWS user by : `vault read aws/creds/my-role-iam-user`. Vault is going to return to you access and secret AWS keys that are valid for any (`ec2:*`) operation.
         > Note : If the policy document is not valid, Vault is going to create user in AWS IAM, and error is going to be returned, the user should be deleted manually from AWS console.
     - The key is valid for 768h (system default), to revoke it manually, execute : `vault lease revoke -prefix aws/creds/my-role-iam-user`.
+    - ### Generating "Assume role" credentials ( STS short-lived credentials ) :
+      - Generating temporary credentials is ofter refered in AWS terminology as "Assuming role", alongside the `acceess_key` and the `secret_key` there is a `security_token` when temporary credentials are genereated.
+      - Take a look at the `roles_additional.tf` file, it gives a permission to the role (`vault-iam-root-role`) used by Vault as `root` ( `aws/config/root` ) to assume the the role that we want to give to the user (create_ami role), so the user is going to get STS credentials for that role. 
+      - To create a Vault role of `credential_type=assumed_role` use the following command: `vault write aws/roles/my-role-assume role_arns=arn:aws:iam::ACCOUNT_AWS_NUMBER:role/NAME_OF_create-ami_ROLE_HERE credential_type=assumed_role`
+        > Note: `role_arns` not `role_arn` !!!
+      - To generate STS credential (assuming role), execute the following command : `vault read aws/sts/my-role-assume` 
+      - Response will look like :
+      ```
+        Key                Value
+        ---                -----
+        lease_id           aws/sts/my-role-assume/GyA2auuTasJp51MZnuxNhrb6
+        lease_duration     1h
+        lease_renewable    false
+        access_key         ASIA<SNIP> # NOTE : ASIA for temporary STS creds
+        secret_key         mMyoAqsyNvBPm4F/v0Ry<SNIP>
+        security_token     FwoGZXIvYXdzEDsaDK+u<SNIP> # Security token is also returned, because it is STS creds.
+      
 
 ## Security Notes :
 - This is just testing setup, treat it as such.
