@@ -44,7 +44,7 @@ resource "aws_iam_role" "vault-iam-root-role" {
 
 # Attaching the policy to the role, this policy is `inline` to the role, not going to show in policies tab
 resource "aws_iam_role_policy" "vault-iam-role-policy" {
-  name   = "Vault-KMS-Unseal-${random_pet.env.id}"            # Just a name
+  name   = "Vault-${random_pet.env.id}"            # Just a name
   role   = aws_iam_role.vault-iam-root-role.id              # The id of the role
   policy = data.aws_iam_policy_document.vault-root-iam-policy.json # Actual policy that allows to use IAM
 }
